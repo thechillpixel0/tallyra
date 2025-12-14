@@ -266,9 +266,9 @@ export const OwnerDashboard = () => {
           shop_id: shop.id,
           name: newStaff.name,
           passcode_hash: newStaff.passcode, // In production, this should be hashed
-          phone: newStaff.phone || null,
-          email: newStaff.email || null,
-          address: newStaff.address || null,
+          phone: newStaff.phone || undefined,
+          email: newStaff.email || undefined,
+          address: newStaff.address || undefined,
           is_active: true
         });
 
@@ -276,7 +276,7 @@ export const OwnerDashboard = () => {
 
       setNewStaff({
         name: '',
-        passcode: '',
+        setError(`Error adding staff: ${error.message}`);
         phone: '',
         email: '',
         address: ''
@@ -286,7 +286,7 @@ export const OwnerDashboard = () => {
       loadDashboardData();
     } catch (error) {
       console.error('Error adding staff:', error);
-      setError('Failed to add staff member');
+      setError(`Error adding staff: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

@@ -158,7 +158,6 @@ export const Calculator = ({ onTransactionComplete, isOwner = false }: Calculato
             ...item,
             name: `${item.name} (${qty} pcs)`,
             base_price: totalPrice,
-            id: `${item.id}-qty-${qty}`
           };
           return { item: multiItem, discount: 0 };
         }
@@ -175,7 +174,6 @@ export const Calculator = ({ onTransactionComplete, isOwner = false }: Calculato
             ...item,
             name: `${item.name} (${qty} pcs)`,
             base_price: totalPrice,
-            id: `${item.id}-qty-${qty}`
           };
           const discount = totalPrice - amount;
           if (!bestDiscountMatch || discount < (bestDiscountMatch.item.base_price - amount)) {

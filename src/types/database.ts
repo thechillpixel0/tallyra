@@ -23,9 +23,9 @@ export interface Database {
           shop_id: string;
           name: string;
           passcode_hash: string;
-          phone: string | null;
-          email: string | null;
-          address: string | null;
+          phone?: string;
+          email?: string;
+          address?: string;
           is_active: boolean;
           created_at: string;
           updated_at: string;
@@ -54,9 +54,9 @@ export interface Database {
         Row: {
           id: string;
           shop_id: string;
-          staff_id: string;
+          staff_id: string; // This should be UUID but keeping as string for compatibility
           entered_amount: number;
-          inferred_item_id: string;
+          inferred_item_id: string; // This should be UUID but keeping as string for compatibility
           base_price: number;
           discount_amount: number;
           discount_percentage: number;

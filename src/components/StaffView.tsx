@@ -51,7 +51,8 @@ export const StaffView = () => {
         .from('transactions')
         .select(`
           *,
-          inferred_item:inferred_item_id(name)
+          inferred_item:inferred_item_id(name),
+          staff:staff_id(name)
         `)
         .eq('shop_id', shop.id)
         .eq('staff_id', staff.id)

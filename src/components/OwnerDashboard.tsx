@@ -256,11 +256,11 @@ export const OwnerDashboard = () => {
 
       setNewStaff({
         name: '',
-        setError(`Error adding staff: ${error.message}`);
         phone: '',
         email: '',
         address: ''
       });
+      setError(`Error adding staff: ${error.message}`);
       setShowAddStaff(false);
       setSuccess('Staff member added successfully');
       loadDashboardData();

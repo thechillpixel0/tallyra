@@ -260,7 +260,7 @@ export const OwnerDashboard = () => {
         email: '',
         address: ''
       });
-      setError(`Error adding staff: ${error.message}`);
+      setError(`Error adding staff: ${error?.message || 'An unknown error occurred'}`);
       setShowAddStaff(false);
       setSuccess('Staff member added successfully');
       loadDashboardData();

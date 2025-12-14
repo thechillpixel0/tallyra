@@ -443,6 +443,114 @@ export const Calculator = ({ onTransactionComplete, isOwner = false }: Calculato
     }).format(amount);
   };
 
+  // QR Code fallback generation functions
+  const generateFallbackQR = (upiId: string, amount: number) => {
+    const upiString = `upi://pay?pa=${upiId}&am=${amount}&cu=INR&tn=Payment`;
+    
+    // Try multiple QR code services
+    const qrServices = [
+      `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiString)}`,
+      `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(upiString)}`,
+      `https://quickchart.io/qr?text=${encodeURIComponent(upiString)}&size=200`
+    ];
+    
+    return `
+      <div class="space-y-3">
+        ${qrServices.map((url, index) => `
+          <div class="qr-option-${index}" style="display: ${index === 0 ? 'block' : 'none'};">
+            <img 
+              src="${url}" 
+              alt="UPI QR Code ${index + 1}" 
+              class="mx-auto w-48 h-48 object-contain rounded-lg shadow-lg border border-gray-200 bg-white qr-image"
+              onload="console.log('QR ${index + 1} loaded successfully')"
+              onerror="
+                console.error('QR ${index + 1} failed, trying next...');
+                this.style.display = 'none';
+                const next = document.querySelector('.qr-option-${index + 1}');
+                if (next) next.style.display = 'block';
+                else {
+                  const parent = this.closest('.space-y-3');
+                  if (parent) {
+                    parent.innerHTML = \`
+                      <div class='text-center py-4'>
+                        <div class='text-4xl mb-2'>📱</div>
+                        <p class='text-gray-600 mb-2'>QR Generation Failed</p>
+                        <p class='text-xs text-gray-500 mb-3'>Use UPI ID manually: ${upiId}</p>
+                        <button onclick='window.open(\"${upiString}\", \"_blank\")' 
+                                class='bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm'>
+                          Open UPI App
+                        </button>
+                      </div>
+                    \`;
+                  }
+                }
+              "
+            />
+          </div>
+        `).join('')}
+      </div>
+    `;
+  };
+  
+  const generateFallbackQRComponent = (upiId: string, amount: number) => {
+    const upiString = `upi://pay?pa=${upiId}&am=${amount}&cu=INR&tn=Payment`;
+    
+    return (
+      <div className="space-y-3">
+        <div className="bg-white p-4 rounded-lg border-2 border-dashed border-gray-300">
+          <div className="text-center">
+            <div className="text-4xl mb-2">📱</div>
+            <p className="text-gray-700 font-medium mb-2">UPI Payment</p>
+            <p className="text-sm text-gray-600 mb-3">Amount: {formatCurrency(amount)}</p>
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  window.open(upiString, '_blank');
+                }}
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg font-medium transition-all"
+              >
+                Pay with UPI App
+              </button>
+              <div className="text-xs text-gray-500 break-all font-mono bg-gray-50 p-2 rounded">
+                {upiId}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Try to load QR from multiple sources */}
+        <div className="grid grid-cols-1 gap-2">
+          {[
+            `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiString)}`,
+            `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(upiString)}`,
+            `https://quickchart.io/qr?text=${encodeURIComponent(upiString)}&size=200`
+          ].map((url, index) => (
+            <img
+              key={index}
+              src={url}
+              alt={`UPI QR Code ${index + 1}`}
+              className="mx-auto w-32 h-32 object-contain rounded border bg-white"
+              onLoad={(e) => {
+                console.log(`QR ${index + 1} loaded successfully`);
+                // Hide other QR codes if this one loads
+                const target = e.currentTarget as HTMLImageElement;
+                const siblings = target.parentElement?.querySelectorAll('img');
+                siblings?.forEach((img, i) => {
+                  if (i !== index) img.style.display = 'none';
+                });
+                target.className = 'mx-auto w-48 h-48 object-contain rounded-lg shadow-lg border border-gray-200 bg-white';
+              }}
+              onError={(e) => {
+                console.error(`QR ${index + 1} failed to load`);
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (currentAmount > 0) {
       const { item } = inferItemFromAmount(currentAmount);

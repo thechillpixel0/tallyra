@@ -114,8 +114,21 @@ export const LoginPage = () => {
               </button>
 
               <div className="text-center mt-8 pt-6 border-t border-white/20">
-                <p className="text-white/70 text-sm">
-                  Demo Access - Owner: 1032005, Staff: 129 or 456
+                <div className="bg-white/10 rounded-xl p-4 mb-4">
+                  <h4 className="text-white font-semibold mb-2">Demo Access Codes</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Owner:</span>
+                      <span className="text-yellow-300 font-mono">1032005</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Staff:</span>
+                      <span className="text-blue-300 font-mono">129, 456</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-white/60 text-xs">
+                  Use these codes to explore the system features
                 </p>
               </div>
             </div>
@@ -139,7 +152,7 @@ export const LoginPage = () => {
               {/* Passcode Display */}
               <div className="bg-black/20 rounded-2xl p-6 text-center">
                 <div className="text-3xl font-mono text-white tracking-widest">
-                  {passcode ? '•'.repeat(passcode.length) : 'Enter passcode...'}
+                  {passcode ? '●'.repeat(passcode.length) : 'Enter passcode...'}
                 </div>
                 {error && (
                   <p className="text-red-300 text-sm mt-2">{error}</p>
@@ -147,6 +160,14 @@ export const LoginPage = () => {
               </div>
 
               {/* Number Pad */}
+              <div className="text-center mb-4">
+                <p className="text-white/70 text-sm">
+                  {userType === 'owner' ? 'Enter owner master passcode' : 'Enter your staff passcode'}
+                </p>
+                <p className="text-white/50 text-xs mt-1">
+                  Demo: {userType === 'owner' ? '1032005' : '129 or 456'}
+                </p>
+              </div>
               <div className="grid grid-cols-3 gap-3">
                 {numbers.flat().map((num, index) => {
                   if (num === '') {
@@ -158,7 +179,7 @@ export const LoginPage = () => {
                       <button
                         key={index}
                         onClick={handleClear}
-                        className="h-16 bg-red-500/20 hover:bg-red-500/30 text-white 
+                        className="h-16 bg-red-500/30 hover:bg-red-500/40 text-white 
                                    rounded-xl transition-all duration-150 active:scale-95
                                    flex items-center justify-center text-xl"
                         disabled={isLoading}
@@ -172,8 +193,8 @@ export const LoginPage = () => {
                     <button
                       key={index}
                       onClick={() => handleNumberClick(num)}
-                      className="h-16 bg-white/10 hover:bg-white/20 text-white text-xl font-semibold
-                                 rounded-xl transition-all duration-150 active:scale-95
+                      className="h-16 bg-white/15 hover:bg-white/25 text-white text-xl font-bold
+                                 rounded-xl transition-all duration-150 active:scale-95 shadow-lg
                                  border border-white/20 hover:border-white/40"
                       disabled={isLoading}
                     >
@@ -187,7 +208,7 @@ export const LoginPage = () => {
               <div className="grid grid-cols-2 gap-4 mt-6">
                 <button
                   onClick={handleBack}
-                  className="py-3 bg-gray-500/20 hover:bg-gray-500/30 text-white rounded-xl
+                  className="py-3 bg-gray-500/30 hover:bg-gray-500/40 text-white rounded-xl font-medium
                              transition-all duration-150 active:scale-95"
                   disabled={isLoading}
                 >
@@ -197,7 +218,7 @@ export const LoginPage = () => {
                   onClick={handleSubmit}
                   disabled={!passcode || isLoading}
                   className="py-3 bg-gradient-to-r from-green-500 to-emerald-500 
-                             hover:from-green-600 hover:to-emerald-600 text-white rounded-xl
+                             hover:from-green-600 hover:to-emerald-600 text-white rounded-xl font-bold
                              transition-all duration-150 active:scale-95 disabled:opacity-50
                              disabled:cursor-not-allowed"
                 >

@@ -133,17 +133,67 @@ export const Calculator = ({ onTransactionComplete, isOwner = false }: Calculato
       return { item: selectedCustomItem, discount };
     }
     
-    let bestMatch = null;
+    // Improved item inference logic
+    let exactMatch = null;
+    let bestDiscountMatch = null;
+    let closestMatch = null;
     let smallestDifference = Infinity;
     
-    // First, try exact match
+    // Handle multiple quantity logic
+    const possibleQuantities = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 24, 25, 30, 50, 100];
+    
     for (const item of items) {
+      // Check for exact match
       if (amount === item.base_price) {
-        return { item, discount: 0 };
+        exactMatch = item;
+        break;
+      }
+      
+      // Check for multiple quantity matches
+      for (const qty of possibleQuantities) {
+        const totalPrice = item.base_price * qty;
+        if (amount === totalPrice) {
+          // Create a virtual item for multiple quantities
+          const multiItem = {
+            ...item,
+            name: `${item.name} (${qty} pcs)`,
+            base_price: totalPrice,
+            id: `${item.id}-qty-${qty}`
+          };
+          return { item: multiItem, discount: 0 };
+        }
+        
+        // Check for discounted multiple quantities
+        const maxDiscount = Math.max(
+          (totalPrice * (item.max_discount_percentage || 0)) / 100,
+          (item.max_discount_fixed || 0) * qty
+        );
+        const minPrice = totalPrice - maxDiscount;
+        
+        if (amount >= minPrice && amount < totalPrice) {
+          const multiItem = {
+            ...item,
+            name: `${item.name} (${qty} pcs)`,
+            base_price: totalPrice,
+            id: `${item.id}-qty-${qty}`
+          };
+          const discount = totalPrice - amount;
+          if (!bestDiscountMatch || discount < (bestDiscountMatch.item.base_price - amount)) {
+            bestDiscountMatch = { item: multiItem, discount };
+          }
+        }
       }
     }
     
-    // Then try within discount range
+    if (exactMatch) {
+      return { item: exactMatch, discount: 0 };
+    }
+    
+    if (bestDiscountMatch) {
+      return bestDiscountMatch;
+    }
+    
+    // Single item discount matching
     for (const item of items) {
       const maxDiscount = Math.max(
         (item.base_price * (item.max_discount_percentage || 0)) / 100,
@@ -153,26 +203,39 @@ export const Calculator = ({ onTransactionComplete, isOwner = false }: Calculato
       
       if (amount >= minPrice && amount <= item.base_price) {
         const difference = item.base_price - amount;
-        if (difference < smallestDifference) {
-          smallestDifference = difference;
-          bestMatch = item;
+        if (!bestDiscountMatch || difference < (bestDiscountMatch.item.base_price - amount)) {
+          bestDiscountMatch = { item, discount: difference };
         }
       }
     }
     
-    // Finally, find closest match
-    if (!bestMatch) {
+    if (bestDiscountMatch) {
+      return bestDiscountMatch;
+    }
+    
+    // Find closest price match as fallback
+    for (const item of items) {
+      const difference = Math.abs(amount - item.base_price);
+      if (difference < smallestDifference) {
+        smallestDifference = difference;
+        closestMatch = item;
+      }
+    }
+    
+    // Check for rounded amounts (like 10, 20, 50, 100)
+    const roundedAmounts = [10, 20, 50, 100, 200, 500, 1000];
+    if (roundedAmounts.includes(amount)) {
       for (const item of items) {
-        const difference = Math.abs(amount - item.base_price);
-        if (difference < smallestDifference) {
-          smallestDifference = difference;
-          bestMatch = item;
+        // If amount is a round number, prefer items close to that price
+        if (Math.abs(item.base_price - amount) <= amount * 0.1) { // Within 10%
+          closestMatch = item;
+          break;
         }
       }
     }
     
-    const discount = bestMatch ? Math.max(0, bestMatch.base_price - amount) : 0;
-    return { item: bestMatch, discount };
+    const discount = closestMatch ? Math.max(0, closestMatch.base_price - amount) : 0;
+    return { item: closestMatch, discount };
   };
 
   const calculateDiscount = (enteredAmount: number, basePrice: number) => {
@@ -771,28 +834,50 @@ export const Calculator = ({ onTransactionComplete, isOwner = false }: Calculato
                   <img 
                     src={shop.upi_qr_url} 
                     alt="UPI QR Code" 
-                    className="mx-auto max-w-48 max-h-48 rounded-lg shadow-lg"
+                    className="mx-auto w-48 h-48 object-contain rounded-lg shadow-lg border border-gray-200"
                     onError={(e) => {
                       console.error('QR Code failed to load:', shop.upi_qr_url);
-                      e.currentTarget.style.display = 'none';
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="text-center py-8">
+                            <div class="mx-auto text-gray-400 mb-2">⚠️</div>
+                            <p class="text-gray-600">Failed to load QR Code</p>
+                            <p class="text-xs text-gray-500 mt-1">Check URL in settings</p>
+                          </div>
+                        `;
+                      }
                     }}
                   />
                   {shop.upi_id && (
-                    <p className="text-sm text-gray-600 mt-3">UPI ID: {shop.upi_id}</p>
+                    <p className="text-sm text-gray-600 mt-3 text-center font-mono bg-white px-3 py-1 rounded border">
+                      {shop.upi_id}
+                    </p>
                   )}
                 </div>
               ) : (
                 <div className="text-center py-8">
                   <QrCode className="mx-auto text-gray-400 mb-2" size={64} />
-                  <p className="text-gray-600">QR Code not configured</p>
+                  <p className="text-gray-600 mb-2">QR Code not configured</p>
+                  <p className="text-xs text-gray-500">Add QR URL in owner settings</p>
                   {shop?.upi_id && (
-                    <p className="text-sm text-gray-500 mt-2">UPI ID: {shop.upi_id}</p>
+                    <p className="text-sm text-gray-600 mt-3 font-mono bg-white px-3 py-1 rounded border inline-block">
+                      {shop.upi_id}
+                    </p>
                   )}
                 </div>
               )}
             </div>
-            <p className="text-lg font-bold text-gray-800 mb-4">
-              Amount: {formatCurrency(currentAmount)}
+            <div className="text-center mb-4">
+              <p className="text-sm text-gray-600 mb-1">Amount to Pay</p>
+              <p className="text-2xl font-bold text-purple-600">
+                {formatCurrency(currentAmount)}
+              </p>
+            </div>
+            <p className="text-sm text-gray-500 text-center mb-4">
+              Scan QR code or use UPI ID to pay
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -808,6 +893,11 @@ export const Calculator = ({ onTransactionComplete, isOwner = false }: Calculato
               >
                 {isProcessing ? 'Processing...' : 'Payment Done'}
               </button>
+            </div>
+            <div className="mt-4 text-center">
+              <p className="text-xs text-gray-500">
+                Click "Payment Done" after completing the UPI payment
+              </p>
             </div>
           </div>
         </div>

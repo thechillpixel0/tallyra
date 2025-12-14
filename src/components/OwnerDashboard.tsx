@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BarChart3, Package, Users, Settings, TrendingUp, CreditCard, AlertTriangle, LogOut, Plus, Edit2, Calendar, Download, Eye, EyeOff, Calculator as CalculatorIcon, Save, X, Upload, Trash2, User, Phone, Mail, MapPin, Clock, DollarSign, Shield, Bell, Palette, Globe, Database, FileText, BarChart } from 'lucide-react';
+import { BarChart3, Package, Users, Settings, TrendingUp, CreditCard, AlertTriangle, LogOut, Plus, CreditCard as Edit2, Calendar, Download, Eye, EyeOff, Calculator as CalculatorIcon, Save, X, Upload, Trash2, User, Phone, Mail, MapPin, Clock, DollarSign, Shield, Bell, Palette, Globe, Database, FileText, BarChart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Item, Staff, Transaction, DailySalesReport } from '../types/database';

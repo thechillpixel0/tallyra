@@ -1,17 +1,5 @@
 import { useState, useEffect } from 'react';
-import { 
-  LogOut, 
-  Users, 
-  Package, 
-  TrendingUp, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  EyeOff,
-  Store,
-  Calculator as CalcIcon
-} from 'lucide-react';
+import { LogOut, Users, Package, TrendingUp, Plus, CreditCard as Edit, Trash2, Eye, EyeOff, Store, Calculator as CalcIcon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Calculator } from './Calculator';

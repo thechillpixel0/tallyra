@@ -78,7 +78,81 @@ export const StaffView = () => {
     setTodayCount(todayTransactions.length);
   };
 
-  const handleTransactionComplete = (transaction: Transaction) => {
+  const handleTransaction = async (amount: number, paymentMode: string) => {
+    if (!shop || !staff) return;
+
+    try {
+      // Find the best matching item based on amount
+      const { data: items } = await supabase
+        .from('items')
+        .select('*')
+        .eq('shop_id', shop.id)
+        .eq('is_active', true);
+
+      let bestMatch = items?.[0];
+      if (items && items.length > 0) {
+        bestMatch = items.reduce((prev, current) => 
+          Math.abs(current.base_price - amount) < Math.abs(prev.base_price - amount) ? current : prev
+        );
+      }
+
+      const transactionData = {
+        shop_id: shop.id,
+        staff_id: staff.id,
+        entered_amount: amount,
+        inferred_item_id: bestMatch?.id || null,
+        base_price: bestMatch?.base_price || amount,
+        discount_amount: bestMatch ? Math.max(0, bestMatch.base_price - amount) : 0,
+        discount_percentage: bestMatch && bestMatch.base_price > 0 
+          ? Math.max(0, ((bestMatch.base_price - amount) / bestMatch.base_price) * 100) 
+          : 0,
+        payment_mode: paymentMode as 'CASH' | 'UPI' | 'CREDIT',
+        is_discount_override: false,
+        is_credit_settled: paymentMode !== 'CREDIT'
+      };
+
+      const { error } = await supabase
+        .from('transactions')
+        .insert([transactionData]);
+
+      if (error) {
+        console.error('Error creating transaction:', error);
+        alert('Failed to create transaction');
+        return;
+      }
+
+      // Update inventory if item was matched
+      if (bestMatch) {
+        const { error: inventoryError } = await supabase
+          .from('items')
+          .update({ 
+            stock_quantity: Math.max(0, bestMatch.stock_quantity - 1),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bestMatch.id);
+
+        if (inventoryError) {
+          console.error('Error updating inventory:', inventoryError);
+        }
+      }
+
+      loadRecentTransactions();
+    } catch (error) {
+      console.error('Error processing transaction:', error);
+      alert('Failed to process transaction');
+    }
+  };
+
+  // Don't render if shop or staff data is not available
+  if (!shop || !staff) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
     loadRecentTransactions();
   };
 
@@ -105,7 +179,7 @@ export const StaffView = () => {
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-sm text-gray-600">Today's Sales</p>
-                <p className="text-lg font-bold text-green-600">₹{todaySales}</p>
+                <p className="text-lg font-bold text-green-600">{shop.currency} {todaySales}</p>
                 <p className="text-xs text-gray-500">{todayCount} transactions</p>
               </div>
               
@@ -126,7 +200,11 @@ export const StaffView = () => {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Calculator */}
           <div>
-            <Calculator onTransactionComplete={handleTransactionComplete} />
+            <Calculator 
+              shopData={shop} 
+              staffData={staff} 
+              onTransaction={handleTransaction} 
+            />
           </div>
 
           {/* Recent Transactions */}
@@ -149,7 +227,7 @@ export const StaffView = () => {
                   >
                     <div>
                       <p className="font-semibold text-gray-900">
-                        ₹{transaction.entered_amount}
+                        {shop.currency} {transaction.entered_amount}
                       </p>
                       <p className="text-sm text-gray-600">
                         {new Date(transaction.created_at).toLocaleTimeString()}
@@ -171,7 +249,7 @@ export const StaffView = () => {
                       </span>
                       {transaction.discount_amount > 0 && (
                         <p className="text-xs text-yellow-600 mt-1">
-                          ₹{transaction.discount_amount} discount
+                          {shop.currency} {transaction.discount_amount} discount
                         </p>
                       )}
                     </div>

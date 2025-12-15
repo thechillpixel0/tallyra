@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { LogOut, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Calculator } from './Calculator';
+import Calculator from './Calculator';
 import { Transaction } from '../types/database';
 
 export const StaffView = () => {

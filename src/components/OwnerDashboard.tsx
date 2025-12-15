@@ -101,6 +101,11 @@ export const OwnerDashboard = () => {
     e.preventDefault();
     if (!shop) return;
 
+    if (!staffForm.name.trim() || !staffForm.passcode.trim()) {
+      alert('Name and passcode are required');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('staff')
@@ -116,7 +121,7 @@ export const OwnerDashboard = () => {
 
       if (error) {
         console.error('Error adding staff:', error);
-        alert('Failed to add staff member');
+        alert(`Failed to add staff member: ${error.message}`);
         return;
       }
 
@@ -186,6 +191,11 @@ export const OwnerDashboard = () => {
     e.preventDefault();
     if (!shop) return;
 
+    if (!itemForm.name.trim() || !itemForm.base_price || !itemForm.stock_quantity) {
+      alert('Name, price, and stock quantity are required');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('items')
@@ -194,15 +204,15 @@ export const OwnerDashboard = () => {
           name: itemForm.name,
           base_price: parseFloat(itemForm.base_price),
           stock_quantity: parseInt(itemForm.stock_quantity),
-          min_stock_alert: parseInt(itemForm.min_stock_alert),
-          max_discount_percentage: parseFloat(itemForm.max_discount_percentage),
-          max_discount_fixed: parseFloat(itemForm.max_discount_fixed),
+          min_stock_alert: parseInt(itemForm.min_stock_alert) || 5,
+          max_discount_percentage: parseFloat(itemForm.max_discount_percentage) || 0,
+          max_discount_fixed: parseFloat(itemForm.max_discount_fixed) || 0,
           is_active: true
         }]);
 
       if (error) {
         console.error('Error adding item:', error);
-        alert('Failed to add item');
+        alert(`Failed to add item: ${error.message}`);
         return;
       }
 

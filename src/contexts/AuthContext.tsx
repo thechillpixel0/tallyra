@@ -53,15 +53,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       // For demo purposes, use simple comparison instead of hashing
       if (passcode === '1032005') {
-        const { data: shopData, error } = await supabase
+        // First try to get the specific shop
+        let { data: shopData, error } = await supabase
           .from('shops')
           .select('*')
           .eq('id', shopId)
           .single();
 
+        // If shop not found, try to get the demo shop
         if (error || !shopData) {
-          console.error('Shop not found:', error);
-          return false;
+          const { data: demoShop, error: demoError } = await supabase
+            .from('shops')
+            .select('*')
+            .eq('id', 'demo-shop-123')
+            .single();
+          
+          if (demoError || !demoShop) {
+            console.error('No shop found:', error || demoError);
+            return false;
+          }
+          
+          shopData = demoShop;
         }
 
         setShop(shopData);
@@ -84,22 +96,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const loginAsStaff = async (shopId: string, passcode: string): Promise<boolean> => {
     try {
-      const { data: shopData, error } = await supabase
+      // First try to get the specific shop
+      let { data: shopData, error } = await supabase
         .from('shops')
         .select('*')
         .eq('id', shopId)
         .single();
 
+      // If shop not found, try to get the demo shop
       if (error || !shopData) {
-        console.error('Shop not found:', error);
-        return false;
+        const { data: demoShop, error: demoError } = await supabase
+          .from('shops')
+          .select('*')
+          .eq('id', 'demo-shop-123')
+          .single();
+        
+        if (demoError || !demoShop) {
+          console.error('No shop found:', error || demoError);
+          return false;
+        }
+        
+        shopData = demoShop;
       }
 
       // Find staff member with matching passcode
       const { data: staffData, error: staffError } = await supabase
         .from('staff')
         .select('*')
-        .eq('shop_id', shopId)
+        .eq('shop_id', shopData.id)
         .eq('passcode_hash', passcode) // In production, this should be hashed
         .eq('is_active', true)
         .single();

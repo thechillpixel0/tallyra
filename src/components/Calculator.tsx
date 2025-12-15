@@ -35,6 +35,18 @@ export const Calculator: React.FC<CalculatorProps> = ({ shopData, staffData, onT
   const [copied, setCopied] = useState(false);
   const [currentQrService, setCurrentQrService] = useState(0);
 
+  // Add safety checks for shopData
+  if (!shopData) {
+    return (
+      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 max-w-md mx-auto">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading calculator...</p>
+        </div>
+      </div>
+    );
+  }
+
   const qrServices: QRService[] = [
     {
       name: 'QR Server',
@@ -59,7 +71,7 @@ export const Calculator: React.FC<CalculatorProps> = ({ shopData, staffData, onT
 
   // Generate UPI payment string
   const generateUpiString = (amount: number) => {
-    if (!shopData.upi_id) return '';
+    if (!shopData?.upi_id) return '';
     return `upi://pay?pa=${shopData.upi_id}&pn=${encodeURIComponent(shopData.name)}&am=${amount}&cu=${shopData.currency}&tn=Payment%20to%20${encodeURIComponent(shopData.name)}`;
   };
 
